@@ -1,0 +1,17 @@
+# Sitio estático (next.config.js → output: "export").
+# Si el repo raíz es la carpeta padre, en Netlify: Base directory = ferreteria (ruta a esta carpeta).
+
+[build]
+  command = "npm run build"
+  publish = "out"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
