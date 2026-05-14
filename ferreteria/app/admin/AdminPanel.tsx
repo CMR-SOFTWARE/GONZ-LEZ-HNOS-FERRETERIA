@@ -21,6 +21,37 @@ type AdminPanelProps = {
   onLogout: () => void;
 };
 
+function formatProductSaveError(err: unknown, action: "save" | "delete"): string {
+  const o = err as { message?: string; code?: string; details?: string } | null;
+  const msg = (o?.message ?? "").trim();
+  const code = (o?.code ?? "").trim();
+  const combined = `${msg} ${code}`.toLowerCase();
+
+  const isRls =
+    combined.includes("row-level security") ||
+    combined.includes("violates row-level") ||
+    combined.includes("42501") ||
+    code === "42501";
+
+  if (isRls) {
+    return (
+      "Supabase bloqueó la operación (RLS): tu usuario tiene que estar logueado y figurar en " +
+      "public.app_admins. En SQL Editor: insert into public.app_admins (user_id) values ('<UUID de Authentication→Users>'); " +
+      (msg ? `Detalle: ${msg}` : "")
+    );
+  }
+
+  if (msg) {
+    return action === "save"
+      ? `No se pudo guardar: ${msg}`
+      : `No se pudo eliminar: ${msg}`;
+  }
+
+  return action === "save"
+    ? "No se pudo guardar el producto. Revisá la conexión y los datos."
+    : "No se pudo eliminar el producto.";
+}
+
 export function AdminPanel({ onLogout }: AdminPanelProps) {
   const { products, loading, error, addProduct, updateProduct, deleteProduct } =
     useProductStore();
@@ -52,9 +83,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       setEditing(null);
     } catch (err) {
       console.error(err);
-      setSubmitError(
-        "No se pudo guardar el producto. Revisá la conexión y políticas de Supabase."
-      );
+      setSubmitError(formatProductSaveError(err, "save"));
     } finally {
       setBusy(false);
     }
@@ -68,9 +97,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       setDeleteConfirm(null);
     } catch (err) {
       console.error(err);
-      setSubmitError(
-        "No se pudo eliminar el producto. Verificá permisos en Supabase."
-      );
+      setSubmitError(formatProductSaveError(err, "delete"));
     } finally {
       setBusy(false);
     }
@@ -136,7 +163,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         </div>
       </div>
       {(error || submitError) && (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 break-words">
           {submitError ?? error}
         </div>
       )}

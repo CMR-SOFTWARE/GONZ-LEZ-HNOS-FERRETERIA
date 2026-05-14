@@ -16,8 +16,7 @@ import {
   Send,
   ShoppingCart,
 } from "lucide-react";
-
-const WHATSAPP_NUMBER = "5492461000000"; // Reemplazar con número real
+import { whatsAppUrl } from "@/lib/whatsapp";
 
 type DeliveryType =
   | ""
@@ -30,6 +29,9 @@ interface FormData {
   whatsapp: string;
   localidad: string;
   address: string;
+  /** Solo si el envío es al interior */
+  provincia: string;
+  ciudadEnvio: string;
   delivery: DeliveryType;
   notes: string;
 }
@@ -39,9 +41,14 @@ const EMPTY_FORM: FormData = {
   whatsapp: "",
   localidad: "",
   address: "",
+  provincia: "",
+  ciudadEnvio: "",
   delivery: "",
   notes: "",
 };
+
+const isInteriorDelivery = (d: DeliveryType) =>
+  d === "Envío al interior (a coordinar)";
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
@@ -74,10 +81,19 @@ export default function CheckoutPage() {
     if (!form.whatsapp.trim()) e.whatsapp = "Requerido";
     else if (!/^\d{8,15}$/.test(form.whatsapp.replace(/\s/g, "")))
       e.whatsapp = "Número inválido (solo dígitos, 8-15)";
-    if (!form.localidad.trim()) e.localidad = "Requerido";
     if (!form.delivery) e.delivery = "Seleccioná un tipo de entrega";
-    if (form.delivery !== "Retiro en local" && !form.address.trim())
-      e.address = "La dirección es requerida para envío";
+
+    if (isInteriorDelivery(form.delivery)) {
+      if (!form.provincia.trim()) e.provincia = "Requerido";
+      if (!form.ciudadEnvio.trim()) e.ciudadEnvio = "Requerido";
+      if (!form.address.trim())
+        e.address = "Indicá calle, número, piso y código postal si podés";
+    } else {
+      if (!form.localidad.trim()) e.localidad = "Requerido";
+      if (form.delivery === "Envío local" && !form.address.trim())
+        e.address = "La dirección es requerida para envío local";
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -99,9 +115,18 @@ export default function CheckoutPage() {
     lines.push(`Total: ${formatPrice(totalPrice)}`);
     lines.push("");
     lines.push(`Nombre: ${form.name}`);
-    lines.push(`Localidad: ${form.localidad}`);
+    lines.push(
+      `WhatsApp de contacto: +54${form.whatsapp.replace(/\s/g, "")}`
+    );
     lines.push(`Tipo de entrega: ${form.delivery}`);
-    lines.push(`Dirección: ${form.address || "-"}`);
+    if (isInteriorDelivery(form.delivery)) {
+      lines.push(`Provincia: ${form.provincia}`);
+      lines.push(`Ciudad: ${form.ciudadEnvio}`);
+      lines.push(`Dirección: ${form.address}`);
+    } else {
+      lines.push(`Localidad: ${form.localidad}`);
+      lines.push(`Dirección: ${form.address || "-"}`);
+    }
     lines.push("");
     lines.push(`Observaciones: ${form.notes || "-"}`);
 
@@ -111,8 +136,7 @@ export default function CheckoutPage() {
   const handleSubmit = () => {
     if (!validate()) return;
     const message = buildWhatsAppMessage();
-    const encoded = encodeURIComponent(message);
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`;
+    const url = whatsAppUrl(message);
     window.open(url, "_blank");
     clearCart();
     router.push("/");
@@ -214,27 +238,7 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          {/* Localidad */}
-          <div>
-            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
-              <MapPin className="w-3.5 h-3.5" />
-              Localidad *
-            </label>
-            <input
-              type="text"
-              value={form.localidad}
-              onChange={(e) => field("localidad", e.target.value)}
-              className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                errors.localidad ? "border-red-400" : "border-gray-300"
-              }`}
-              placeholder="San Nicolás de los Arroyos"
-            />
-            {errors.localidad && (
-              <p className="text-xs text-red-500 mt-1">{errors.localidad}</p>
-            )}
-          </div>
-
-          {/* Delivery type */}
+          {/* Delivery type — primero para mostrar los campos que correspondan */}
           <div>
             <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
               <Truck className="w-3.5 h-3.5" />
@@ -242,9 +246,17 @@ export default function CheckoutPage() {
             </label>
             <select
               value={form.delivery}
-              onChange={(e) =>
-                field("delivery", e.target.value as DeliveryType)
-              }
+              onChange={(e) => {
+                const v = e.target.value as DeliveryType;
+                setForm((prev) => ({
+                  ...prev,
+                  delivery: v,
+                  ...(v !== "Envío al interior (a coordinar)"
+                    ? { provincia: "", ciudadEnvio: "" }
+                    : {}),
+                }));
+                setErrors({});
+              }}
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             >
               <option value="">Seleccioná una opción</option>
@@ -259,31 +271,152 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          {/* Address */}
-          <div>
-            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
-              <Home className="w-3.5 h-3.5" />
-              Dirección{form.delivery !== "Retiro en local" ? " *" : ""}
-            </label>
-            <input
-              type="text"
-              value={form.address}
-              onChange={(e) => field("address", e.target.value)}
-              className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                errors.address ? "border-red-400" : "border-gray-300"
-              }`}
-              placeholder="Av. Rivadavia 1234, Piso 2"
-              disabled={form.delivery === "Retiro en local"}
-            />
-            {errors.address && (
-              <p className="text-xs text-red-500 mt-1">{errors.address}</p>
-            )}
-            {form.delivery === "Retiro en local" && (
+          {/* Localidad: retiro y envío en la ciudad */}
+          {!isInteriorDelivery(form.delivery) && (
+            <div>
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
+                <MapPin className="w-3.5 h-3.5" />
+                Localidad *
+              </label>
+              <input
+                type="text"
+                value={form.localidad}
+                onChange={(e) => field("localidad", e.target.value)}
+                className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  errors.localidad ? "border-red-400" : "border-gray-300"
+                }`}
+                placeholder="San Nicolás de los Arroyos"
+              />
+              {errors.localidad && (
+                <p className="text-xs text-red-500 mt-1">{errors.localidad}</p>
+              )}
+            </div>
+          )}
+
+          {/* Envío al interior: provincia, ciudad y dirección */}
+          {isInteriorDelivery(form.delivery) && (
+            <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50/60 p-4">
+              <p className="text-sm font-semibold text-amber-900">
+                Datos de envío fuera de la ciudad
+              </p>
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
+                  <MapPin className="w-3.5 h-3.5" />
+                  Provincia *
+                </label>
+                <input
+                  type="text"
+                  value={form.provincia}
+                  onChange={(e) => field("provincia", e.target.value)}
+                  className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white ${
+                    errors.provincia ? "border-red-400" : "border-gray-300"
+                  }`}
+                  placeholder="Ej. Buenos Aires, Santa Fe…"
+                />
+                {errors.provincia && (
+                  <p className="text-xs text-red-500 mt-1">{errors.provincia}</p>
+                )}
+              </div>
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
+                  <MapPin className="w-3.5 h-3.5" />
+                  Ciudad *
+                </label>
+                <input
+                  type="text"
+                  value={form.ciudadEnvio}
+                  onChange={(e) => field("ciudadEnvio", e.target.value)}
+                  className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white ${
+                    errors.ciudadEnvio ? "border-red-400" : "border-gray-300"
+                  }`}
+                  placeholder="Nombre de la ciudad o localidad"
+                />
+                {errors.ciudadEnvio && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.ciudadEnvio}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
+                  <Home className="w-3.5 h-3.5" />
+                  Dirección completa *
+                </label>
+                <input
+                  type="text"
+                  value={form.address}
+                  onChange={(e) => field("address", e.target.value)}
+                  className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white ${
+                    errors.address ? "border-red-400" : "border-gray-300"
+                  }`}
+                  placeholder="Calle, número, piso/depto, referencias, CP"
+                />
+                {errors.address && (
+                  <p className="text-xs text-red-500 mt-1">{errors.address}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Dirección: envío local (misma ciudad) */}
+          {form.delivery === "Envío local" && (
+            <div>
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
+                <Home className="w-3.5 h-3.5" />
+                Dirección *
+              </label>
+              <input
+                type="text"
+                value={form.address}
+                onChange={(e) => field("address", e.target.value)}
+                className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  errors.address ? "border-red-400" : "border-gray-300"
+                }`}
+                placeholder="Av. Rivadavia 1234, Piso 2"
+              />
+              {errors.address && (
+                <p className="text-xs text-red-500 mt-1">{errors.address}</p>
+              )}
+            </div>
+          )}
+
+          {/* Retiro: sin dirección de envío */}
+          {form.delivery === "Retiro en local" && (
+            <div>
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
+                <Home className="w-3.5 h-3.5" />
+                Dirección de envío
+              </label>
+              <input
+                type="text"
+                value={form.address}
+                onChange={(e) => field("address", e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-gray-50 text-gray-400"
+                placeholder="No aplica — retirás en el local"
+                disabled
+              />
               <p className="text-xs text-gray-400 mt-1">
                 📍 Av. Mitre 845, San Nicolás – L a V 8 a 18hs
               </p>
-            )}
-          </div>
+            </div>
+          )}
+
+          {form.delivery === "" && (
+            <div>
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-500 mb-1">
+                <Home className="w-3.5 h-3.5" />
+                Dirección
+              </label>
+              <input
+                type="text"
+                value={form.address}
+                onChange={(e) => field("address", e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-gray-50 text-gray-400"
+                placeholder="Elegí primero el tipo de entrega"
+                disabled
+              />
+            </div>
+          )}
 
           {/* Notes */}
           <div>

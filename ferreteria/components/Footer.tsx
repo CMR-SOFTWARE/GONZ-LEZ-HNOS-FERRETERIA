@@ -1,4 +1,5 @@
 import { Phone } from "lucide-react";
+import { whatsAppUrl, WHATSAPP_BUSINESS_LABEL } from "@/lib/whatsapp";
 
 const STORE_NAME = "GONZ\u00C1LEZ-HNOS FERRETERIA";
 
@@ -13,10 +14,15 @@ export function Footer() {
               Todo lo que necesitas para tu obra
             </p>
           </div>
-          <p className="inline-flex items-center gap-2 text-sm text-gray-600">
+          <a
+            href={whatsAppUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-green-600 transition-colors"
+          >
             <Phone className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
-            <span>Contacto: +54 9 11 1234-5678</span>
-          </p>
+            <span>WhatsApp: {WHATSAPP_BUSINESS_LABEL}</span>
+          </a>
         </div>
 
         <p className="mt-6 text-center text-sm text-gray-400 sm:text-left">

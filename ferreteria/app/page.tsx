@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import { ProductCard } from "@/components/ProductCard";
 import { CATEGORIES } from "@/data/products";
 import { useProductStore } from "@/lib/ProductStoreContext";
+import { whatsAppUrl } from "@/lib/whatsapp";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
 export default function HomePage() {
@@ -33,15 +35,29 @@ export default function HomePage() {
         </div>
       )}
       {/* Hero banner */}
-      <div className="bg-gradient-to-r from-orange-600 to-orange-900 rounded-2xl p-6 sm:p-10 mb-8 text-white">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-          Bienvenido a nuestra Ferretería
-        </h1>
-        <p className="text-orange-200 text-sm sm:text-base mb-4">
+      <div className="rounded-2xl bg-orange-600 p-6 sm:p-10 mb-8 text-white shadow-md shadow-orange-600/20">
+        <div className="flex items-center gap-3 sm:gap-4 mb-3">
+          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/30 bg-white/95 p-1 sm:h-16 sm:w-16">
+            <Image
+              src="/logo-gonzalez-hermanos.png"
+              alt="González Hnos Ferretería"
+              fill
+              className="object-contain"
+              sizes="64px"
+              priority
+            />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold leading-tight">
+            Bienvenido a nuestra Ferretería
+          </h1>
+        </div>
+        <p className="text-sm text-white/90 sm:text-base mb-4 max-w-2xl">
           Encontrá todo lo que necesitás para tu proyecto y pedí fácil por WhatsApp.
         </p>
         <a
-          href="https://wa.me/5402461000000"
+          href={whatsAppUrl(
+            "Hola, quería consultarles por la ferretería González Hnos."
+          )}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors"

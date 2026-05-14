@@ -5,9 +5,11 @@ import React, {
   useContext,
   useState,
   useCallback,
+  useEffect,
   ReactNode,
 } from "react";
 import { Product } from "@/data/products";
+import { loadCartFromStorage, saveCartToStorage } from "@/lib/cartStorage";
 
 export interface CartItem {
   product: Product;
@@ -28,6 +30,17 @@ const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [cartHydrated, setCartHydrated] = useState(false);
+
+  useEffect(() => {
+    setItems(loadCartFromStorage());
+    setCartHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!cartHydrated) return;
+    saveCartToStorage(items);
+  }, [items, cartHydrated]);
 
   const addItem = useCallback((product: Product, quantity: number) => {
     setItems((prev) => {
