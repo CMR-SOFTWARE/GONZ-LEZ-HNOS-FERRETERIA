@@ -31,6 +31,13 @@ function mapAuthError(message: string): string {
   if (m.includes("email not confirmed")) {
     return "Confirmá el correo desde el enlace que envió Supabase.";
   }
+  if (m.includes("invalid path") || m.includes("invalid url")) {
+    return (
+      "La URL de Supabase está mal configurada. Tiene que ser solo la Project URL, " +
+      "por ejemplo https://abcdefgh.supabase.co (sin /rest/v1, sin espacios ni comillas). " +
+      "Revisala en Vercel → Settings → Environment Variables y en Supabase → Project Settings → API."
+    );
+  }
   if (m.includes("api key") || m.includes("jwt")) {
     return "Clave de Supabase incorrecta o proyecto distinto. Revisá .env.local.";
   }
