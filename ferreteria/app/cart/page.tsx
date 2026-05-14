@@ -165,7 +165,8 @@ export default function CartPage() {
                 </span>
               </div>
               <p className="text-xs text-gray-400 mt-1">
-                * Los precios no incluyen envío
+                * El envío o retiro se elige al confirmar el pedido y se suma al
+                total
               </p>
             </div>
 

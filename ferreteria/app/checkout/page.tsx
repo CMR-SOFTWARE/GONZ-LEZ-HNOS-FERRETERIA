@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/lib/CartContext";
@@ -15,14 +15,16 @@ import {
   MessageSquare,
   Send,
   ShoppingCart,
+  Store,
 } from "lucide-react";
 import { whatsAppUrl } from "@/lib/whatsapp";
-
-type DeliveryType =
-  | ""
-  | "Retiro en local"
-  | "Envío local"
-  | "Envío al interior (a coordinar)";
+import {
+  type DeliveryType,
+  type PickupBranchId,
+  PICKUP_BRANCHES,
+  quoteShipping,
+  isInteriorDelivery,
+} from "@/lib/deliveryPricing";
 
 interface FormData {
   name: string;
@@ -33,6 +35,8 @@ interface FormData {
   provincia: string;
   ciudadEnvio: string;
   delivery: DeliveryType;
+  /** Sucursal de retiro (solo si delivery = Retiro en sucursal) */
+  pickupBranchId: PickupBranchId;
   notes: string;
 }
 
@@ -44,11 +48,9 @@ const EMPTY_FORM: FormData = {
   provincia: "",
   ciudadEnvio: "",
   delivery: "",
+  pickupBranchId: PICKUP_BRANCHES[0].id,
   notes: "",
 };
-
-const isInteriorDelivery = (d: DeliveryType) =>
-  d === "Envío al interior (a coordinar)";
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
@@ -88,6 +90,8 @@ export default function CheckoutPage() {
       if (!form.ciudadEnvio.trim()) e.ciudadEnvio = "Requerido";
       if (!form.address.trim())
         e.address = "Indicá calle, número, piso y código postal si podés";
+    } else if (form.delivery === "Retiro en sucursal") {
+      if (!form.localidad.trim()) e.localidad = "Requerido";
     } else {
       if (!form.localidad.trim()) e.localidad = "Requerido";
       if (form.delivery === "Envío local" && !form.address.trim())
@@ -97,6 +101,16 @@ export default function CheckoutPage() {
     setErrors(e);
     return Object.keys(e).length === 0;
   };
+
+  const shippingQuote = useMemo(
+    () => quoteShipping(form.delivery, { provincia: form.provincia }),
+    [form.delivery, form.provincia]
+  );
+  const grandTotal = totalPrice + shippingQuote.amount;
+
+  const pickupBranch =
+    PICKUP_BRANCHES.find((b) => b.id === form.pickupBranchId) ??
+    PICKUP_BRANCHES[0];
 
   const buildWhatsAppMessage = (): string => {
     const lines = ["Hola, quiero hacer un pedido:", ""];
@@ -112,14 +126,19 @@ export default function CheckoutPage() {
     });
 
     lines.push("");
-    lines.push(`Total: ${formatPrice(totalPrice)}`);
+    lines.push(`Subtotal productos: ${formatPrice(totalPrice)}`);
+    lines.push(shippingQuote.detailLine);
+    lines.push(`*Total estimado: ${formatPrice(grandTotal)}*`);
     lines.push("");
     lines.push(`Nombre: ${form.name}`);
     lines.push(
       `WhatsApp de contacto: +54${form.whatsapp.replace(/\s/g, "")}`
     );
     lines.push(`Tipo de entrega: ${form.delivery}`);
-    if (isInteriorDelivery(form.delivery)) {
+    if (form.delivery === "Retiro en sucursal") {
+      lines.push(`Sucursal: ${pickupBranch.label}`);
+      lines.push(`Dirección de retiro: ${pickupBranch.address}`);
+    } else if (isInteriorDelivery(form.delivery)) {
       lines.push(`Provincia: ${form.provincia}`);
       lines.push(`Ciudad: ${form.ciudadEnvio}`);
       lines.push(`Dirección: ${form.address}`);
@@ -183,9 +202,26 @@ export default function CheckoutPage() {
               </div>
             ))}
           </div>
-          <div className="border-t border-orange-200 pt-2 mt-3 flex justify-between font-bold text-orange-900">
-            <span>Total</span>
-            <span className="text-lg">{formatPrice(totalPrice)}</span>
+          <div className="border-t border-orange-200 pt-2 mt-3 space-y-1.5 text-sm text-orange-900">
+            <div className="flex justify-between">
+              <span>Subtotal</span>
+              <span className="font-medium">{formatPrice(totalPrice)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-orange-800/90">{shippingQuote.summaryLine}</span>
+              <span className="font-medium">
+                {shippingQuote.amount > 0
+                  ? formatPrice(shippingQuote.amount)
+                  : form.delivery === "Envío al interior (a coordinar)" &&
+                      shippingQuote.amount === 0
+                    ? "A coordinar"
+                    : formatPrice(0)}
+              </span>
+            </div>
+            <div className="flex justify-between font-bold pt-1 border-t border-orange-200/80">
+              <span>Total estimado</span>
+              <span className="text-lg">{formatPrice(grandTotal)}</span>
+            </div>
           </div>
         </div>
 
@@ -260,8 +296,8 @@ export default function CheckoutPage() {
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             >
               <option value="">Seleccioná una opción</option>
-              <option value="Retiro en local">🏪 Retiro en local</option>
-              <option value="Envío local">🛵 Envío local</option>
+              <option value="Retiro en sucursal">🏪 Retiro en sucursal</option>
+              <option value="Envío local">🛵 Envío a domicilio (zona local)</option>
               <option value="Envío al interior (a coordinar)">
                 📦 Envío al interior (a coordinar)
               </option>
@@ -270,6 +306,32 @@ export default function CheckoutPage() {
               <p className="text-xs text-red-500 mt-1">{errors.delivery}</p>
             )}
           </div>
+
+          {/* Sucursal de retiro */}
+          {form.delivery === "Retiro en sucursal" && (
+            <div>
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
+                <Store className="w-3.5 h-3.5" />
+                Sucursal donde retirás *
+              </label>
+              <select
+                value={form.pickupBranchId}
+                onChange={(e) =>
+                  field("pickupBranchId", e.target.value as PickupBranchId)
+                }
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+              >
+                {PICKUP_BRANCHES.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                📍 {pickupBranch.address}
+              </p>
+            </div>
+          )}
 
           {/* Localidad: retiro y envío en la ciudad */}
           {!isInteriorDelivery(form.delivery) && (
@@ -381,7 +443,7 @@ export default function CheckoutPage() {
           )}
 
           {/* Retiro: sin dirección de envío */}
-          {form.delivery === "Retiro en local" && (
+          {form.delivery === "Retiro en sucursal" && (
             <div>
               <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
                 <Home className="w-3.5 h-3.5" />
@@ -392,12 +454,9 @@ export default function CheckoutPage() {
                 value={form.address}
                 onChange={(e) => field("address", e.target.value)}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-gray-50 text-gray-400"
-                placeholder="No aplica — retirás en el local"
+                placeholder="No aplica — retirás en la sucursal elegida"
                 disabled
               />
-              <p className="text-xs text-gray-400 mt-1">
-                📍 Av. Mitre 845, San Nicolás – L a V 8 a 18hs
-              </p>
             </div>
           )}
 

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProductImage } from "@/components/ProductImage";
 import { useProductStore } from "@/lib/ProductStoreContext";
 import { ProductForm } from "@/components/ProductForm";
 import { Product } from "@/data/products";
 import { formatPrice } from "@/lib/utils";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import {
   Plus,
   Pencil,
@@ -62,6 +63,45 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [sessionHint, setSessionHint] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const supabase = getSupabaseClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (cancelled || !session?.user) {
+          if (!cancelled) setSessionHint(null);
+          return;
+        }
+        const { data: row, error: admErr } = await supabase
+          .from("app_admins")
+          .select("user_id")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        if (cancelled) return;
+        const email = session.user.email ?? "(sin correo)";
+        const id = session.user.id;
+        if (admErr || !row) {
+          setSessionHint(
+            `Sesión: ${email} · UUID: ${id} — Esta cuenta NO aparece en public.app_admins (o no se pudo leer). Ejecutá en SQL Editor: insert into public.app_admins (user_id) values ('${id}');`
+          );
+        } else {
+          setSessionHint(
+            `Sesión: ${email} · UUID: ${id} (figurás en app_admins). Si igual falla el guardado, cerrá sesión y volvé a entrar o revisá que Vercel use el mismo proyecto de Supabase donde corriste el SQL.`
+          );
+        }
+      } catch {
+        if (!cancelled) setSessionHint(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filtered = products.filter(
     (p) =>
@@ -74,6 +114,28 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     setSubmitError(null);
     setBusy(true);
     try {
+      const supabase = getSupabaseClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user) {
+        setSubmitError(
+          "La sesión de Supabase expiró o no está activa. Usá «Cerrar sesión» y volvé a entrar."
+        );
+        return;
+      }
+      const { data: adminRow } = await supabase
+        .from("app_admins")
+        .select("user_id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (!adminRow) {
+        setSubmitError(
+          `Tu usuario (${session.user.email ?? session.user.id}) no está en public.app_admins en ESTE proyecto de Supabase. En SQL Editor: insert into public.app_admins (user_id) values ('${session.user.id}');`
+        );
+        return;
+      }
+
       if ("id" in data) {
         await updateProduct(data as Product);
       } else {
@@ -93,6 +155,17 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     setSubmitError(null);
     setBusy(true);
     try {
+      const supabase = getSupabaseClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user) {
+        setSubmitError(
+          "La sesión expiró. Cerrá sesión y volvé a entrar antes de eliminar."
+        );
+        return;
+      }
+
       await deleteProduct(id);
       setDeleteConfirm(null);
     } catch (err) {
@@ -126,6 +199,11 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
               Panel de Administración
             </h1>
             <p className="text-sm text-gray-500">Gestión de productos</p>
+            {sessionHint && (
+              <p className="mt-2 max-w-xl text-xs leading-relaxed text-gray-500 break-all">
+                {sessionHint}
+              </p>
+            )}
           </div>
         </div>
         <button
