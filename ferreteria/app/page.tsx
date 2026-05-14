@@ -28,14 +28,14 @@ export default function HomePage() {
   }, [products, search, activeCategory]);
 
   return (
-    <div>
+    <div className="w-full min-w-0">
       {error && (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           {error}
         </div>
       )}
       {/* Hero banner */}
-      <div className="rounded-2xl bg-orange-600 p-6 sm:p-10 mb-8 text-white shadow-md shadow-orange-600/20">
+      <div className="rounded-2xl bg-orange-600 p-4 shadow-md shadow-orange-600/20 sm:p-6 lg:p-10 mb-6 sm:mb-8 text-white">
         <div className="flex items-center gap-3 sm:gap-4 mb-3">
           <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/30 bg-white/95 p-1 sm:h-16 sm:w-16">
             <Image

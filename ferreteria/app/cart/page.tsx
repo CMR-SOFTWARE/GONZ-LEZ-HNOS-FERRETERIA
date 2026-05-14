@@ -12,7 +12,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto text-center py-20">
+      <div className="max-w-2xl mx-auto text-center py-16 sm:py-20 px-1">
         <ShoppingCart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-gray-700 mb-2">
           Tu carrito está vacío
@@ -32,7 +32,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto w-full min-w-0 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-black">Mi pedido</h1>
         <button

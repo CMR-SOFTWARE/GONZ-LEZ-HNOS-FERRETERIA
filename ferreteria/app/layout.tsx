@@ -27,7 +27,7 @@ export default function RootLayout({
         <ProductStoreProvider>
           <CartProvider>
             <Navbar />
-            <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 min-w-0">
               {children}
             </main>
             <Footer />

@@ -62,7 +62,7 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto text-center py-20">
+      <div className="max-w-2xl mx-auto w-full min-w-0 text-center py-16 sm:py-20 px-1">
         <ShoppingCart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-gray-700 mb-2">
           Tu carrito está vacío
@@ -167,7 +167,7 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="mx-auto w-full min-w-0 max-w-2xl">
       <Link
         href="/cart"
         className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-orange-600 mb-6 transition-colors"

@@ -13,12 +13,15 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur-sm supports-[backdrop-filter]:bg-white/80">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+        <div className="flex h-14 items-center justify-between gap-2 min-w-0 sm:h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl text-orange-600">
-            <div className="relative h-9 w-9 overflow-hidden rounded-md border border-orange-100 bg-white">
+          <Link
+            href="/"
+            className="flex min-w-0 flex-1 items-center gap-2 font-bold text-orange-600 sm:flex-none sm:text-xl"
+          >
+            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md border border-orange-100 bg-white">
               <Image
                 src="/logo-gonzalez-hermanos.png"
                 alt={`Logo ${STORE_NAME}`}
@@ -28,77 +31,97 @@ export function Navbar() {
                 priority
               />
             </div>
-            <span className="hidden sm:block">{STORE_NAME}</span>
+            <span className="hidden truncate sm:inline">{STORE_NAME}</span>
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-            <Link href="/" className="hover:text-orange-600 transition-colors">Catalogo</Link>
-            <Link href="/cart" className="hover:text-orange-600 transition-colors">Mi pedido</Link>
+          <nav className="hidden items-center gap-6 text-sm font-medium text-gray-600 md:flex">
+            <Link
+              href="/"
+              className="transition-colors hover:text-orange-600"
+            >
+              Catalogo
+            </Link>
+            <Link
+              href="/cart"
+              className="transition-colors hover:text-orange-600"
+            >
+              Mi pedido
+            </Link>
           </nav>
 
-          {/* Cuenta + cart */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Cuenta (solo desktop, discreto) + carrito + menú móvil */}
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Link
               href="/admin"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm hover:border-gray-300 hover:bg-gray-50 transition-colors"
-              title="Cuenta y administracion"
+              className="hidden items-center gap-1.5 rounded-lg border border-gray-200/80 bg-gray-50/50 px-2.5 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:text-gray-800 md:inline-flex"
+              title="Cuenta y administración"
             >
-              <UserCircle className="w-4 h-4 text-gray-600" aria-hidden />
+              <UserCircle className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
               <span>Cuenta</span>
             </Link>
             <Link
               href="/cart"
-              className="relative flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-700 transition-colors"
+              className="relative inline-flex items-center gap-1.5 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-orange-700 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
             >
-              <ShoppingCart className="w-4 h-4" />
+              <ShoppingCart className="h-4 w-4 shrink-0" aria-hidden />
               <span className="hidden sm:inline">Carrito</span>
               {totalItems > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white sm:-right-2 sm:-top-2 sm:text-xs">
                   {totalItems > 99 ? "99+" : totalItems}
                 </span>
               )}
             </Link>
 
-            {/* Mobile menu button */}
             <button
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
-              onClick={() => setMenuOpen(!menuOpen)}
+              type="button"
+              className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-nav-menu"
+              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
             >
-              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {menuOpen ? (
+                <X className="h-5 w-5" aria-hidden />
+              ) : (
+                <Menu className="h-5 w-5" aria-hidden />
+              )}
             </button>
           </div>
         </div>
 
-        {/* Mobile menu */}
-        {menuOpen && (
-          <div className="md:hidden border-t border-gray-100 py-3 space-y-1">
+        {/* Menú móvil / lateral: incluye Cuenta (no visible en la barra superior) */}
+        <div
+          id="mobile-nav-menu"
+          className={`md:hidden ${menuOpen ? "block border-t border-gray-100" : "hidden"}`}
+        >
+          <nav className="space-y-0.5 py-3 text-center">
             <Link
               href="/"
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50"
               onClick={() => setMenuOpen(false)}
             >
               Catalogo
             </Link>
             <Link
               href="/cart"
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50"
               onClick={() => setMenuOpen(false)}
             >
               Mi pedido
             </Link>
+            <div className="my-2 border-t border-gray-100" aria-hidden />
             <Link
               href="/admin"
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
               onClick={() => setMenuOpen(false)}
             >
-              Cuenta
+              <UserCircle className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+              Cuenta / Administración
             </Link>
-          </div>
-        )}
+          </nav>
+        </div>
       </div>
     </header>
   );
 }
-
-

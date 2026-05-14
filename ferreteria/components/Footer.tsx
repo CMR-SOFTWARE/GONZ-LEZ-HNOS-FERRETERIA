@@ -6,7 +6,7 @@ const STORE_NAME = "GONZ\u00C1LEZ-HNOS FERRETERIA";
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-gray-200 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="mx-auto max-w-7xl px-3 py-8 sm:px-6 lg:px-8 sm:py-10">
         <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
           <div>
             <p className="font-semibold text-black">{STORE_NAME}</p>

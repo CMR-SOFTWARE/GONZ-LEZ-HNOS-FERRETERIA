@@ -50,8 +50,8 @@ function AdminLoginScreen({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <div className="flex min-h-[min(640px,calc(100vh-7rem))] flex-col items-center justify-center py-8 sm:py-12">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 sm:p-10 shadow-lg shadow-slate-200/80 ring-1 ring-slate-100">
+    <div className="flex min-h-[min(640px,calc(100vh-7rem))] w-full flex-col items-center justify-center px-3 py-8 sm:py-12">
+      <div className="w-full min-w-0 max-w-md rounded-2xl bg-white p-6 shadow-lg shadow-slate-200/80 ring-1 ring-slate-100 sm:p-10">
         <div className="flex flex-col items-center text-center">
           <p className="mb-5 max-w-sm text-xs leading-relaxed text-gray-500">
             Software desarrollado por{" "}
