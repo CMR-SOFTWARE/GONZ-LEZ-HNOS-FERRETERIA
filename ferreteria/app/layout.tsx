@@ -12,6 +12,10 @@ const STORE_NAME = "GONZ\u00C1LEZ-HNOS FERRETERIA";
 export const metadata: Metadata = {
   title: STORE_NAME,
   description: "Catalogo online de ferreteria con pedidos por WhatsApp.",
+  icons: {
+    icon: [{ url: "/logo-gonzalez-hermanos.png", type: "image/png" }],
+    apple: [{ url: "/logo-gonzalez-hermanos.png", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({
