@@ -163,24 +163,6 @@ function AdminLoginScreen({ onSuccess }: { onSuccess: () => void }) {
             ← Volver a la tienda
           </Link>
         </div>
-
-        <div className="mt-8 space-y-1.5 border-t border-gray-100 pt-6 text-center text-xs text-gray-500">
-          <p>
-            <span className="font-medium text-gray-600">Dirección:</span>{" "}
-            Alberdi 302, Esquina San Martín
-          </p>
-          <p>
-            <span className="font-medium text-gray-600">Instagram:</span>{" "}
-            <a
-              href="https://www.instagram.com/ferreteriagonzalezhermanos?igsh=a2t1OHdpbW1yanht"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-orange-600 hover:text-orange-700 hover:underline"
-            >
-              Ferretería González Hermanos
-            </a>
-          </p>
-        </div>
       </div>
     </div>
   );
