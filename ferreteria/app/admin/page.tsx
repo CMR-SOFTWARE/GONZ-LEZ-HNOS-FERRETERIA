@@ -155,21 +155,31 @@ function AdminLoginScreen({ onSuccess }: { onSuccess: () => void }) {
           </button>
         </form>
 
-        <p className="mt-6 rounded-lg border border-gray-200 bg-gray-50/80 px-3 py-2.5 text-center text-xs text-gray-600">
-          <span className="mr-1" aria-hidden>
-            🔒
-          </span>
-          El acceso lo gestiona Supabase: solo cuentas autorizadas pueden editar
-          productos.
-        </p>
-
-        <div className="mt-8 text-center">
+        <div className="mt-6 text-center">
           <Link
             href="/"
             className="text-sm font-medium text-orange-600 hover:text-orange-700 hover:underline"
           >
             ← Volver a la tienda
           </Link>
+        </div>
+
+        <div className="mt-8 space-y-1.5 border-t border-gray-100 pt-6 text-center text-xs text-gray-500">
+          <p>
+            <span className="font-medium text-gray-600">Dirección:</span>{" "}
+            Alberdi 302, Esquina San Martín
+          </p>
+          <p>
+            <span className="font-medium text-gray-600">Instagram:</span>{" "}
+            <a
+              href="https://www.instagram.com/ferreteriagonzalezhermanos?igsh=a2t1OHdpbW1yanht"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-orange-600 hover:text-orange-700 hover:underline"
+            >
+              Ferretería González Hermanos
+            </a>
+          </p>
         </div>
       </div>
     </div>

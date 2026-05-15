@@ -60,6 +60,12 @@ export default function CheckoutPage() {
     Partial<Record<keyof FormData, string>>
   >({});
 
+  const shippingQuote = useMemo(
+    () => quoteShipping(form.delivery, { provincia: form.provincia }),
+    [form.delivery, form.provincia]
+  );
+  const grandTotal = totalPrice + shippingQuote.amount;
+
   if (items.length === 0) {
     return (
       <div className="max-w-2xl mx-auto w-full min-w-0 text-center py-16 sm:py-20 px-1">
@@ -101,12 +107,6 @@ export default function CheckoutPage() {
     setErrors(e);
     return Object.keys(e).length === 0;
   };
-
-  const shippingQuote = useMemo(
-    () => quoteShipping(form.delivery, { provincia: form.provincia }),
-    [form.delivery, form.provincia]
-  );
-  const grandTotal = totalPrice + shippingQuote.amount;
 
   const pickupBranch =
     PICKUP_BRANCHES.find((b) => b.id === form.pickupBranchId) ??
