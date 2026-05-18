@@ -21,20 +21,14 @@ import { whatsAppUrl } from "@/lib/whatsapp";
 import {
   type DeliveryType,
   type PickupBranchId,
+  type CheckoutFields,
   PICKUP_BRANCHES,
   quoteShipping,
   isInteriorDelivery,
+  validateCheckout,
 } from "@/lib/deliveryPricing";
 
-interface FormData {
-  name: string;
-  whatsapp: string;
-  localidad: string;
-  address: string;
-  /** Solo si el envío es al interior */
-  provincia: string;
-  ciudadEnvio: string;
-  delivery: DeliveryType;
+interface FormData extends CheckoutFields {
   /** Sucursal de retiro (solo si delivery = Retiro en sucursal) */
   pickupBranchId: PickupBranchId;
   notes: string;
@@ -84,26 +78,7 @@ export default function CheckoutPage() {
   }
 
   const validate = (): boolean => {
-    const e: Partial<Record<keyof FormData, string>> = {};
-    if (!form.name.trim()) e.name = "Requerido";
-    if (!form.whatsapp.trim()) e.whatsapp = "Requerido";
-    else if (!/^\d{8,15}$/.test(form.whatsapp.replace(/\s/g, "")))
-      e.whatsapp = "Número inválido (solo dígitos, 8-15)";
-    if (!form.delivery) e.delivery = "Seleccioná un tipo de entrega";
-
-    if (isInteriorDelivery(form.delivery)) {
-      if (!form.provincia.trim()) e.provincia = "Requerido";
-      if (!form.ciudadEnvio.trim()) e.ciudadEnvio = "Requerido";
-      if (!form.address.trim())
-        e.address = "Indicá calle, número, piso y código postal si podés";
-    } else if (form.delivery === "Retiro en sucursal") {
-      if (!form.localidad.trim()) e.localidad = "Requerido";
-    } else {
-      if (!form.localidad.trim()) e.localidad = "Requerido";
-      if (form.delivery === "Envío local" && !form.address.trim())
-        e.address = "La dirección es requerida para envío local";
-    }
-
+    const e = validateCheckout(form);
     setErrors(e);
     return Object.keys(e).length === 0;
   };
