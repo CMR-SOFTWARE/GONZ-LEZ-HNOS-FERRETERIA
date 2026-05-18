@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Product } from "@/data/products";
 import { ProductImage } from "@/components/ProductImage";
 import { useCart } from "@/lib/CartContext";
-import { formatPrice, isDecimalUnit } from "@/lib/utils";
+import { formatPrice, isDecimalUnit, getStockStatus } from "@/lib/utils";
 import { ShoppingCart, Plus, Minus, Package } from "lucide-react";
 
 interface ProductCardProps {
@@ -31,8 +31,9 @@ export function ProductCard({ product }: ProductCardProps) {
   const decrement = () =>
     setQty((prev) => Math.max(min, parseFloat((prev - step).toFixed(2))));
 
-  const stockLow = product.stock > 0 && product.stock <= 5;
-  const outOfStock = product.stock === 0;
+  const stockStatus = getStockStatus(product.stock);
+  const stockLow = stockStatus === "low";
+  const outOfStock = stockStatus === "out";
 
   return (
     <div className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">

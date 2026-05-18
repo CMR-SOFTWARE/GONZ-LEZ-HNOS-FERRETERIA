@@ -1,3 +1,14 @@
+export type StockStatus = "out" | "low" | "ok";
+
+// Umbral único: si en el futuro cambia de 5 a otro número, se toca acá y listo
+const STOCK_LOW_THRESHOLD = 5;
+
+export function getStockStatus(stock: number): StockStatus {
+  if (stock === 0) return "out";
+  if (stock <= STOCK_LOW_THRESHOLD) return "low";
+  return "ok";
+}
+
 export function formatPrice(price: number): string {
   return new Intl.NumberFormat("es-AR", {
     style: "currency",

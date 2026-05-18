@@ -5,7 +5,7 @@ import { ProductImage } from "@/components/ProductImage";
 import { useProductStore } from "@/lib/ProductStoreContext";
 import { ProductForm } from "@/components/ProductForm";
 import { Product } from "@/data/products";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getStockStatus, StockStatus } from "@/lib/utils";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import {
   Plus,
@@ -20,6 +20,12 @@ import {
 
 type AdminPanelProps = {
   onLogout: () => void;
+};
+
+const STOCK_BADGE_CLASS: Record<StockStatus, string> = {
+  ok:  "bg-green-100 text-green-600",
+  low: "bg-amber-100 text-amber-600",
+  out: "bg-red-100 text-red-600",
 };
 
 function formatProductSaveError(err: unknown, action: "save" | "delete"): string {
@@ -179,19 +185,19 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
           <p className="text-2xl font-bold text-green-600">
-            {products.filter((p) => p.stock > 5).length}
+            {products.filter((p) => getStockStatus(p.stock) === "ok").length}
           </p>
           <p className="text-xs text-gray-500 mt-1">Con stock</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
           <p className="text-2xl font-bold text-amber-500">
-            {products.filter((p) => p.stock > 0 && p.stock <= 5).length}
+            {products.filter((p) => getStockStatus(p.stock) === "low").length}
           </p>
           <p className="text-xs text-gray-500 mt-1">Stock bajo</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
           <p className="text-2xl font-bold text-red-500">
-            {products.filter((p) => p.stock === 0).length}
+            {products.filter((p) => getStockStatus(p.stock) === "out").length}
           </p>
           <p className="text-xs text-gray-500 mt-1">Sin stock</p>
         </div>
@@ -312,13 +318,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span
-                      className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        product.stock === 0
-                          ? "bg-red-100 text-red-600"
-                          : product.stock <= 5
-                          ? "bg-amber-100 text-amber-600"
-                          : "bg-green-100 text-green-600"
-                      }`}
+                      className={`text-xs font-semibold px-2 py-1 rounded-full ${STOCK_BADGE_CLASS[getStockStatus(product.stock)]}`}
                     >
                       {product.stock}
                     </span>
@@ -409,13 +409,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                     {formatPrice(product.price)}/{product.unit}
                   </span>
                   <span
-                    className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                      product.stock === 0
-                        ? "bg-red-100 text-red-600"
-                        : product.stock <= 5
-                        ? "bg-amber-100 text-amber-600"
-                        : "bg-green-100 text-green-600"
-                    }`}
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STOCK_BADGE_CLASS[getStockStatus(product.stock)]}`}
                   >
                     Stock: {product.stock}
                   </span>
