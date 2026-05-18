@@ -102,3 +102,47 @@ export function quoteShipping(
 export function isInteriorDelivery(d: DeliveryType): boolean {
   return d === "Envío al interior (a coordinar)";
 }
+
+/** Campos del formulario de checkout que intervienen en la validación. */
+export interface CheckoutFields {
+  name: string;
+  whatsapp: string;
+  delivery: DeliveryType;
+  localidad: string;
+  address: string;
+  provincia: string;
+  ciudadEnvio: string;
+}
+
+/**
+ * Valida el formulario de checkout según el tipo de entrega elegido.
+ * Devuelve un objeto con los errores por campo; si está vacío, el form es válido.
+ */
+export function validateCheckout(
+  fields: CheckoutFields
+): Partial<Record<keyof CheckoutFields, string>> {
+  const e: Partial<Record<keyof CheckoutFields, string>> = {};
+
+  if (!fields.name.trim()) e.name = "Requerido";
+
+  if (!fields.whatsapp.trim()) e.whatsapp = "Requerido";
+  else if (!/^\d{8,15}$/.test(fields.whatsapp.replace(/\s/g, "")))
+    e.whatsapp = "Número inválido (solo dígitos, 8-15)";
+
+  if (!fields.delivery) e.delivery = "Seleccioná un tipo de entrega";
+
+  if (isInteriorDelivery(fields.delivery)) {
+    if (!fields.provincia.trim()) e.provincia = "Requerido";
+    if (!fields.ciudadEnvio.trim()) e.ciudadEnvio = "Requerido";
+    if (!fields.address.trim())
+      e.address = "Indicá calle, número, piso y código postal si podés";
+  } else if (fields.delivery === "Retiro en sucursal") {
+    if (!fields.localidad.trim()) e.localidad = "Requerido";
+  } else if (fields.delivery === "Envío local") {
+    if (!fields.localidad.trim()) e.localidad = "Requerido";
+    if (!fields.address.trim())
+      e.address = "La dirección es requerida para envío local";
+  }
+
+  return e;
+}
