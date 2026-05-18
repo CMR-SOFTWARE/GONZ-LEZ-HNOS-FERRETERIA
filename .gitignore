@@ -1,0 +1,6 @@
+# Archivos de deploy generados — no tienen valor en el repo
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db
