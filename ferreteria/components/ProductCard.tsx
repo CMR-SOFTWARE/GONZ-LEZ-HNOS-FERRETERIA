@@ -9,9 +9,10 @@ import { ShoppingCart, Plus, Minus, Package } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
+  priority?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, priority = false }: ProductCardProps) {
   const { addItem } = useCart();
   const [qty, setQty] = useState(isDecimalUnit(product.unit) ? 1.0 : 1);
   const [added, setAdded] = useState(false);
@@ -45,6 +46,7 @@ export function ProductCard({ product }: ProductCardProps) {
           fill
           className="object-contain object-center p-2 transition-transform duration-300 group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          priority={priority}
         />
         <div className="absolute top-2 left-2">
           <span className="bg-orange-100 text-orange-600 text-xs font-medium px-2 py-1 rounded-full">

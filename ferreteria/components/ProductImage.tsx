@@ -8,6 +8,7 @@ type ProductImageProps = {
   fill?: boolean;
   className?: string;
   sizes?: string;
+  priority?: boolean;
 };
 
 function isDataUrl(src: string): boolean {
@@ -20,6 +21,7 @@ export function ProductImage({
   fill,
   className = "",
   sizes,
+  priority = false,
 }: ProductImageProps) {
   if (!src?.trim()) {
     return (
@@ -36,6 +38,8 @@ export function ProductImage({
       <img
         src={src}
         alt={alt}
+        loading={priority ? "eager" : "lazy"}
+        decoding="async"
         className={
           fill
             ? `absolute inset-0 h-full w-full object-cover ${className}`
@@ -52,6 +56,7 @@ export function ProductImage({
       fill={fill}
       className={className}
       sizes={sizes}
+      priority={priority}
     />
   );
 }
