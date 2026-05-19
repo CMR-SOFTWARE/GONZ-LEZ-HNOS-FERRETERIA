@@ -1,26 +1,14 @@
 "use client";
 
-import type { AuthError, Session } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 
-/**
- * Supabase Auth solo acepta email. Si el usuario escribe "HermanosGonzalez",
- * probamos estos sufijos (el script SQL usa el primero; .local a veces falla en Auth).
- */
-const ADMIN_LOGIN_EMAIL_SUFFIXES = [
-  "@ferreteria.local",
-  "@ferreteria.invalid",
-] as const;
+const ADMIN_EMAIL_SUFFIX = "@ferreteria.local";
 
-function emailsToTryForLogin(identifier: string): string[] {
-  const t = identifier.trim();
-  if (!t) return [];
-  if (t.includes("@")) {
-    const lower = t.toLowerCase();
-    return lower === t ? [t] : [t, lower];
-  }
-  const base = t.toLowerCase();
-  return ADMIN_LOGIN_EMAIL_SUFFIXES.map((s) => `${base}${s}`);
+function resolveLoginEmail(identifier: string): string {
+  const t = identifier.trim().toLowerCase();
+  if (!t) return "";
+  return t.includes("@") ? t : `${t}${ADMIN_EMAIL_SUFFIX}`;
 }
 
 function mapAuthError(message: string): string {
@@ -49,23 +37,17 @@ export async function signInAdmin(
   password: string
 ): Promise<Session> {
   const supabase = getSupabaseClient();
-  const attempts = emailsToTryForLogin(emailOrUsername);
-  if (attempts.length === 0) {
-    throw new Error("Ingresá usuario o correo.");
-  }
+  const email = resolveLoginEmail(emailOrUsername);
+  if (!email) throw new Error("Ingresá usuario o correo.");
 
-  let lastError: AuthError | null = null;
-  for (const email of attempts) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (!error && data.session) {
-      return data.session;
-    }
-    lastError = error;
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error || !data.session) {
+    throw new Error(mapAuthError(error?.message ?? "Error desconocido"));
   }
-  throw new Error(mapAuthError(lastError?.message ?? "Error desconocido"));
+  return data.session;
 }
 
 export async function signOutAdmin(): Promise<void> {

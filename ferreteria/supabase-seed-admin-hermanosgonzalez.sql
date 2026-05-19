@@ -6,10 +6,9 @@
 --
 -- En el sitio podés iniciar sesión con:
 --   Usuario: HermanosGonzalez   (sin @; se convierte a correo interno)
---   Contraseña: Alberdi302
+--   Contraseña: (la que configuraste en Supabase Authentication → Users)
 --
 -- El correo guardado en Supabase es: hermanosgonzalez@ferreteria.local
--- La app también prueba @ferreteria.invalid si hace falta.
 -- Si este script falla por columnas distintas en tu proyecto, creá el usuario
 -- en Authentication → Users con ese correo y contraseña, y ejecutá solo:
 --   insert into public.app_admins (user_id) values ('<uuid del usuario>');
@@ -34,7 +33,7 @@ do $$
 declare
   v_user_id uuid := gen_random_uuid();
   v_email text := 'hermanosgonzalez@ferreteria.local';
-  v_password text := 'Alberdi302';
+  v_password text := 'REEMPLAZAR_CON_CONTRASEÑA_REAL';
   v_encrypted text := crypt(v_password, gen_salt('bf'));
 begin
   delete from public.app_admins
