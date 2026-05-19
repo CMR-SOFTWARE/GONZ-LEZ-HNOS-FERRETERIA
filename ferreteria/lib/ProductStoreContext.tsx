@@ -8,7 +8,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { Product, products as initialProducts } from "@/data/products";
+import { Product } from "@/data/products";
 import {
   fetchProducts,
   createProduct,
@@ -44,7 +44,7 @@ export function ProductStoreProvider({ children }: { children: ReactNode }) {
       setError(
         "No se pudo conectar con Supabase. Mostrando catálogo local temporalmente."
       );
-      setProducts(initialProducts);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
