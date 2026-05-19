@@ -4,6 +4,11 @@
   "outputDirectory": "out",
   "installCommand": "npm install",
   "framework": null,
+  "rewrites": [
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/cart", "destination": "/cart.html" },
+    { "source": "/checkout", "destination": "/checkout.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

@@ -9,6 +9,22 @@
   NODE_VERSION = "20"
   NEXT_TELEMETRY_DISABLED = "1"
 
+# Next export genera admin.html (no admin/index.html); sin esto /admin da 404.
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/cart"
+  to = "/cart.html"
+  status = 200
+
+[[redirects]]
+  from = "/checkout"
+  to = "/checkout.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
