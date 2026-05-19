@@ -80,7 +80,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           src={imageSrc}
           alt={product.name}
           fill
-          className="object-contain object-center p-2"
+          className="object-contain object-center p-2 transition-transform duration-300 ease-out group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           priority={priority}
         />
