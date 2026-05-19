@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Product, CATEGORIES, Category } from "@/data/products";
+import { compressImageFile } from "@/lib/compressImage";
 import { X } from "lucide-react";
 
 interface ProductFormProps {
@@ -12,7 +13,7 @@ interface ProductFormProps {
 
 const UNITS = ["unidad", "metro", "litro", "caja"] as const;
 
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 const EMPTY: Omit<Product, "id"> = {
   name: "",
@@ -78,18 +79,21 @@ export function ProductForm({ product, onSave, onClose }: ProductFormProps) {
     if (file.size > MAX_IMAGE_BYTES) {
       setErrors((prev) => ({
         ...prev,
-        imageUrl: "La imagen debe pesar menos de 2 MB",
+        imageUrl: "La imagen debe pesar menos de 5 MB",
       }));
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === "string") {
-        field("imageUrl", result);
-      }
-    };
-    reader.readAsDataURL(file);
+    void compressImageFile(file)
+      .then((dataUrl) => field("imageUrl", dataUrl))
+      .catch((err: unknown) => {
+        setErrors((prev) => ({
+          ...prev,
+          imageUrl:
+            err instanceof Error
+              ? err.message
+              : "No se pudo comprimir la imagen",
+        }));
+      });
   };
 
   const clearImage = () => {
@@ -260,7 +264,8 @@ export function ProductForm({ product, onSave, onClose }: ProductFormProps) {
               ) : null}
             </div>
             <p className="mt-1 text-xs text-gray-500">
-              JPG, PNG o WebP. Máximo 2 MB. También podés pegar una URL abajo.
+              JPG, PNG o WebP (se comprimen al guardar). Mejor: pegá una URL como
+              /products/foto.webp.
             </p>
             <div className="mt-3">
               <label className="block text-sm font-medium text-gray-700 mb-1">

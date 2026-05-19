@@ -7,6 +7,8 @@ import { ProductForm } from "@/components/ProductForm";
 import { Product } from "@/data/products";
 import { formatPrice, getStockStatus, StockStatus } from "@/lib/utils";
 import { getSupabaseClient } from "@/lib/supabaseClient";
+import { fetchProductById } from "@/lib/productService";
+import { resolveProductImageForSave } from "@/lib/productStorage";
 import {
   Plus,
   Pencil,
@@ -104,15 +106,40 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       }
 
       if ("id" in data) {
-        await updateProduct(data as Product);
+        const product = data as Product;
+        const imageUrl = await resolveProductImageForSave(
+          product.id,
+          product.imageUrl
+        );
+        await updateProduct({ ...product, imageUrl });
       } else {
-        await addProduct(data);
+        const id = crypto.randomUUID();
+        const imageUrl = await resolveProductImageForSave(
+          id,
+          data.imageUrl
+        );
+        await addProduct({ ...data, imageUrl }, id);
       }
       setFormOpen(false);
       setEditing(null);
     } catch (err) {
       console.error(err);
       setSubmitError(formatProductSaveError(err, "save"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const openEdit = async (product: Product) => {
+    setSubmitError(null);
+    setBusy(true);
+    try {
+      const full = await fetchProductById(product.id);
+      setEditing(full ?? product);
+      setFormOpen(true);
+    } catch (err) {
+      console.error(err);
+      setSubmitError("No se pudo cargar la foto del producto para editar.");
     } finally {
       setBusy(false);
     }
@@ -287,7 +314,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                         src={product.imageUrl}
                         alt={product.name}
                         fill
-                        className="object-cover"
+                        className="object-contain p-0.5"
                         sizes="40px"
                       />
                     </div>
@@ -326,10 +353,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-1">
                       <button
-                        onClick={() => {
-                          setEditing(product);
-                          setFormOpen(true);
-                        }}
+                        onClick={() => void openEdit(product)}
                         disabled={busy}
                         className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
                         title="Editar"
@@ -386,10 +410,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
                     <button
-                      onClick={() => {
-                        setEditing(product);
-                        setFormOpen(true);
-                      }}
+                      onClick={() => void openEdit(product)}
                       disabled={busy}
                       className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg"
                     >

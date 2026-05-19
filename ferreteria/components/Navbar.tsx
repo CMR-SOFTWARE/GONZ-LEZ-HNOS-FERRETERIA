@@ -21,13 +21,13 @@ export function Navbar() {
             href="/"
             className="flex min-w-0 flex-1 items-center gap-2 font-bold text-orange-600 sm:flex-none sm:text-xl"
           >
-            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md border border-orange-100 bg-white">
+            <div className="relative h-9 w-[4.5rem] shrink-0 overflow-hidden rounded-md border border-orange-100 bg-white">
               <Image
                 src="/logo-gonzalez-hermanos.png"
                 alt={`Logo ${STORE_NAME}`}
                 fill
-                className="object-contain p-0.5"
-                sizes="36px"
+                className="object-contain object-left p-0.5"
+                sizes="72px"
                 priority
               />
             </div>

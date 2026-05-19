@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Product } from "@/data/products";
 import { ProductImage } from "@/components/ProductImage";
 import { useCart } from "@/lib/CartContext";
+import { useProductImage } from "@/lib/useProductImage";
 import { formatPrice, isDecimalUnit, getStockStatus } from "@/lib/utils";
-import { ShoppingCart, Plus, Minus, Package } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Package, Loader2 } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -16,6 +17,32 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const { addItem } = useCart();
   const [qty, setQty] = useState(isDecimalUnit(product.unit) ? 1.0 : 1);
   const [added, setAdded] = useState(false);
+  const imageRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(priority);
+
+  useEffect(() => {
+    if (priority) return;
+    const el = imageRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "280px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [priority]);
+
+  const { imageSrc, loading: imageLoading } = useProductImage(
+    product.id,
+    product.imageUrl,
+    inView
+  );
 
   const decimal = isDecimalUnit(product.unit);
   const step = decimal ? 0.5 : 1;
@@ -39,12 +66,21 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   return (
     <div className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">
       {/* Image */}
-      <div className="relative h-[14.5rem] overflow-hidden bg-gray-100">
+      <div
+        ref={imageRef}
+        className="relative h-[14.5rem] overflow-hidden bg-gray-100"
+      >
+        {imageLoading && !imageSrc?.trim() ? (
+          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+            <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
+            <span className="sr-only">Cargando foto</span>
+          </div>
+        ) : null}
         <ProductImage
-          src={product.imageUrl}
+          src={imageSrc}
           alt={product.name}
           fill
-          className="object-contain object-center p-2 transition-transform duration-300 group-hover:scale-105"
+          className="object-contain object-center p-2"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           priority={priority}
         />

@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { Package } from "lucide-react";
+import { isBrokenProductPlaceholder } from "@/lib/imageUrl";
 
 type ProductImageProps = {
   src: string;
@@ -15,6 +17,14 @@ function isDataUrl(src: string): boolean {
   return src.startsWith("data:image/");
 }
 
+function fillClassName(className: string): string {
+  const base = "absolute inset-0 h-full w-full";
+  if (/object-(contain|cover|fill|none|scale-down)/.test(className)) {
+    return `${base} ${className}`;
+  }
+  return `${base} object-contain object-center ${className}`;
+}
+
 export function ProductImage({
   src,
   alt,
@@ -23,12 +33,16 @@ export function ProductImage({
   sizes,
   priority = false,
 }: ProductImageProps) {
-  if (!src?.trim()) {
+  if (!src?.trim() || isBrokenProductPlaceholder(src)) {
     return (
       <div
-        className={`bg-gray-100 ${fill ? "absolute inset-0" : ""} ${className}`}
+        className={`flex items-center justify-center bg-gray-100 text-gray-300 ${
+          fill ? "absolute inset-0" : ""
+        } ${className}`}
         aria-hidden
-      />
+      >
+        <Package className="h-12 w-12" strokeWidth={1.25} />
+      </div>
     );
   }
 
@@ -40,11 +54,7 @@ export function ProductImage({
         alt={alt}
         loading={priority ? "eager" : "lazy"}
         decoding="async"
-        className={
-          fill
-            ? `absolute inset-0 h-full w-full object-cover ${className}`
-            : className
-        }
+        className={fill ? fillClassName(className) : className}
       />
     );
   }
@@ -54,11 +64,13 @@ export function ProductImage({
       src={src}
       alt={alt}
       fill={fill}
-      className={className}
+      className={
+        fill && !/object-(contain|cover|fill|none|scale-down)/.test(className)
+          ? `object-contain object-center ${className}`
+          : className
+      }
       sizes={sizes}
       priority={priority}
     />
   );
 }
-
-

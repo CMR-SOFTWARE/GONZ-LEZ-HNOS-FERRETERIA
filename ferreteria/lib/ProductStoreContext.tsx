@@ -21,7 +21,7 @@ interface ProductStoreContextType {
   loading: boolean;
   error: string | null;
   refreshProducts: () => Promise<void>;
-  addProduct: (product: Omit<Product, "id">) => Promise<void>;
+  addProduct: (product: Omit<Product, "id">, id?: string) => Promise<void>;
   updateProduct: (product: Product) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
 }
@@ -41,8 +41,16 @@ export function ProductStoreProvider({ children }: { children: ReactNode }) {
       setProducts(remoteProducts);
     } catch (err) {
       console.error(err);
+      const code = (err as { code?: string })?.code;
+      const msg = err instanceof Error ? err.message : String(err);
+      const timedOut =
+        code === "57014" || /timeout|statement timeout/i.test(msg);
       setError(
-        "No se pudo conectar con Supabase. Mostrando catálogo local temporalmente."
+        timedOut
+          ? "La base de datos tardó demasiado (fotos muy pesadas). Revisá supabase-fix-heavy-images.sql o reemplazá imágenes por URLs."
+          : msg.includes("NEXT_PUBLIC_SUPABASE") || msg.includes("Faltan")
+            ? msg
+            : "No se pudo conectar con Supabase. Revisá las variables en Vercel o ferreteria/.env.local."
       );
       setProducts([]);
     } finally {
@@ -54,11 +62,14 @@ export function ProductStoreProvider({ children }: { children: ReactNode }) {
     void refreshProducts();
   }, [refreshProducts]);
 
-  const addProduct = useCallback(async (data: Omit<Product, "id">) => {
-    setError(null);
-    const created = await createProduct(data);
-    setProducts((prev) => [created, ...prev]);
-  }, []);
+  const addProduct = useCallback(
+    async (data: Omit<Product, "id">, id?: string) => {
+      setError(null);
+      const created = await createProduct(data, id ? { id } : undefined);
+      setProducts((prev) => [created, ...prev]);
+    },
+    []
+  );
 
   const updateProduct = useCallback(async (updated: Product) => {
     setError(null);
