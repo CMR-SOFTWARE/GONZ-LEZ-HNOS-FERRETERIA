@@ -54,15 +54,35 @@ export async function uploadProductImage(
   return catalogImageUrl(getPublicProductImageUrl(path));
 }
 
-/** Antes de guardar: convierte base64 → URL de Storage. */
+function isStorageProductUrl(url: string, productId: string): boolean {
+  return (
+    url.includes("/storage/v1/object/public/product-images/") &&
+    url.includes(`${productId}.`)
+  );
+}
+
+/** Antes de guardar: solo sube si hay foto nueva (data URL). URLs ya en Storage se reutilizan. */
 export async function resolveProductImageForSave(
   productId: string,
-  imageUrl: string
+  imageUrl: string,
+  previousImageUrl?: string
 ): Promise<string> {
   const trimmed = imageUrl.trim();
   if (!trimmed) return trimmed;
+
   if (!trimmed.startsWith("data:image/")) {
     return catalogImageUrl(trimmed);
   }
+
+  const prev = previousImageUrl?.trim() ?? "";
+  if (
+    prev &&
+    !prev.startsWith("data:image/") &&
+    isStorageProductUrl(prev, productId) &&
+    trimmed === prev
+  ) {
+    return catalogImageUrl(prev);
+  }
+
   return uploadProductImage(productId, trimmed);
 }

@@ -23,6 +23,19 @@ type ProductInsert = Omit<Product, "id">;
 
 const TABLE = "products";
 
+async function requireAuthedClient() {
+  const supabase = getSupabaseClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.user) {
+    throw new Error(
+      "Sesión expirada. Cerrá sesión en el panel y volvé a entrar."
+    );
+  }
+  return supabase;
+}
+
 /** Columnas del listado (sin image_url: evita timeout si hay fotos base64 grandes en la BD). */
 const PRODUCT_LIST_COLUMNS =
   "id,name,price,unit,stock,category,description";
@@ -123,7 +136,7 @@ export async function createProduct(
   input: ProductInsert,
   options?: { id?: string }
 ): Promise<Product> {
-  const supabase = getSupabaseClient();
+  const supabase = await requireAuthedClient();
   const row = mapProductToRow(input);
   const payload = options?.id ? { ...row, id: options.id } : row;
   const { data, error } = await supabase
@@ -137,7 +150,7 @@ export async function createProduct(
 }
 
 export async function editProduct(input: Product): Promise<Product> {
-  const supabase = getSupabaseClient();
+  const supabase = await requireAuthedClient();
   const { data, error } = await supabase
     .from(TABLE)
     .update(mapProductToRow(input))
@@ -150,7 +163,7 @@ export async function editProduct(input: Product): Promise<Product> {
 }
 
 export async function removeProduct(id: string): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = await requireAuthedClient();
   const { error } = await supabase.from(TABLE).delete().eq("id", id);
   if (error) throw error;
 }

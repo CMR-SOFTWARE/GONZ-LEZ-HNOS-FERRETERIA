@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Package } from "lucide-react";
 import { isBrokenProductPlaceholder } from "@/lib/imageUrl";
 
@@ -12,10 +11,6 @@ type ProductImageProps = {
   sizes?: string;
   priority?: boolean;
 };
-
-function isDataUrl(src: string): boolean {
-  return src.startsWith("data:image/");
-}
 
 function fillClassName(className: string): string {
   const base = "absolute inset-0 h-full w-full";
@@ -41,36 +36,20 @@ export function ProductImage({
         } ${className}`}
         aria-hidden
       >
-        <Package className="h-12 w-12" strokeWidth={1.25} />
+        <Package className="h-8 w-8" strokeWidth={1.25} />
       </div>
     );
   }
 
-  if (isDataUrl(src)) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={src}
-        alt={alt}
-        loading={priority ? "eager" : "lazy"}
-        decoding="async"
-        className={fill ? fillClassName(className) : className}
-      />
-    );
-  }
-
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src={src}
       alt={alt}
-      fill={fill}
-      className={
-        fill && !/object-(contain|cover|fill|none|scale-down)/.test(className)
-          ? `object-contain object-center ${className}`
-          : className
-      }
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
+      className={fill ? fillClassName(className) : className}
       sizes={sizes}
-      priority={priority}
     />
   );
 }

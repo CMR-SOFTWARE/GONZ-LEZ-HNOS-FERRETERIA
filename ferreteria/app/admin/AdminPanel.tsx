@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ProductImage } from "@/components/ProductImage";
+import { AdminProductThumb } from "@/components/AdminProductThumb";
 import { useProductStore } from "@/lib/ProductStoreContext";
 import { ProductForm } from "@/components/ProductForm";
 import { Product } from "@/data/products";
@@ -42,10 +42,23 @@ function formatProductSaveError(err: unknown, action: "save" | "delete"): string
     combined.includes("42501") ||
     code === "42501";
 
+  const isStorage =
+    combined.includes("storage") ||
+    combined.includes("bucket") ||
+    combined.includes("product-images");
+
   if (isRls) {
     return (
-      "Supabase bloqueó la operación (RLS): tu usuario tiene que estar logueado y figurar en " +
-      "public.app_admins. En SQL Editor: insert into public.app_admins (user_id) values ('<UUID de Authentication→Users>'); " +
+      "Supabase bloqueó la operación (permisos). Ejecutá supabase-fix-admin-permissions.sql " +
+      "y agregá tu usuario en app_admins (Authentication → Users → User UID). " +
+      (msg ? `Detalle: ${msg}` : "")
+    );
+  }
+
+  if (isStorage) {
+    return (
+      "No se pudo subir la foto. Ejecutá supabase-fix-admin-permissions.sql en Supabase " +
+      "(incluye permisos de Storage). " +
       (msg ? `Detalle: ${msg}` : "")
     );
   }
@@ -109,7 +122,8 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         const product = data as Product;
         const imageUrl = await resolveProductImageForSave(
           product.id,
-          product.imageUrl
+          product.imageUrl,
+          editing?.id === product.id ? editing.imageUrl : undefined
         );
         await updateProduct({ ...product, imageUrl });
       } else {
@@ -309,15 +323,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                   className="hover:bg-gray-50 transition-colors"
                 >
                   <td className="px-4 py-3">
-                    <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                      <ProductImage
-                        src={product.imageUrl}
-                        alt={product.name}
-                        fill
-                        className="object-contain p-0.5"
-                        sizes="40px"
-                      />
-                    </div>
+                    <AdminProductThumb product={product} />
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-black truncate max-w-xs">
@@ -389,15 +395,11 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
               key={product.id}
               className="bg-white rounded-xl border border-gray-200 p-4 flex gap-3"
             >
-              <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                <ProductImage
-                  src={product.imageUrl}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                  sizes="64px"
-                />
-              </div>
+              <AdminProductThumb
+                product={product}
+                className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0"
+                sizes="64px"
+              />
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
