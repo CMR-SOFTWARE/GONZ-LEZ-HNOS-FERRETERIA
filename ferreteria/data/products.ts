@@ -4,7 +4,9 @@ export type Category =
   | "Herramientas"
   | "Electricidad"
   | "Plomería"
-  | "Pinturas";
+  | "Pinturas"
+  | "Vehículo"
+  | "Varios";
 
 export interface Product {
   id: string;
@@ -22,6 +24,8 @@ export const CATEGORIES: Category[] = [
   "Electricidad",
   "Plomería",
   "Pinturas",
+  "Vehículo",
+  "Varios",
 ];
 
 export const products: Product[] = [

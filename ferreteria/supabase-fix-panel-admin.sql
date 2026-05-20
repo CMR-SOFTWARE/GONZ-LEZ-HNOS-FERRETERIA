@@ -21,7 +21,7 @@ create table if not exists public.products (
   unit text not null check (unit in ('unidad', 'metro', 'litro', 'caja')),
   stock integer not null check (stock >= 0),
   image_url text not null,
-  category text not null check (category in ('Herramientas', 'Electricidad', 'Plomería', 'Pinturas')),
+  category text not null check (category in ('Herramientas', 'Electricidad', 'Plomería', 'Pinturas', 'Vehículo', 'Varios')),
   description text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
