@@ -95,7 +95,7 @@ function AdminLoginScreen({ onSuccess }: { onSuccess: () => void }) {
                 value={loginId}
                 onChange={(e) => setLoginId(e.target.value)}
                 className="w-full rounded-lg border-0 bg-gray-100 py-3 pl-10 pr-3 text-sm text-black placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500"
-                placeholder="HermanosGonzalez"
+                placeholder="Usuario o correo"
                 required
               />
             </div>
