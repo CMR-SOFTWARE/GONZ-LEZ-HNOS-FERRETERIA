@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import QRCode from "react-qr-code";
 import { AdminProductThumb } from "@/components/AdminProductThumb";
 import { useProductStore } from "@/lib/ProductStoreContext";
 import { ProductForm } from "@/components/ProductForm";
 import { Product } from "@/data/products";
 import { formatPrice, getStockStatus, StockStatus } from "@/lib/utils";
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { fetchProductById } from "@/lib/productService";
+import { fetchProductById, bulkUpdatePrices } from "@/lib/productService";
 import { resolveProductImageForSave } from "@/lib/productStorage";
 import {
   Plus,
@@ -18,7 +19,12 @@ import {
   ShieldAlert,
   X,
   LogOut,
+  QrCode,
+  Download,
+  TrendingUp,
 } from "lucide-react";
+
+const SITE_URL = "https://ferreteriagonzalezhnos.com";
 
 type AdminPanelProps = {
   onLogout: () => void;
@@ -74,8 +80,11 @@ function formatProductSaveError(err: unknown, action: "save" | "delete"): string
     : "No se pudo eliminar el producto.";
 }
 
+type PriceMode = "idle" | "preview" | "applying";
+type PricePreviewItem = { id: string; name: string; oldPrice: number; newPrice: number };
+
 export function AdminPanel({ onLogout }: AdminPanelProps) {
-  const { products, loading, error, addProduct, updateProduct, deleteProduct } =
+  const { products, loading, error, addProduct, updateProduct, deleteProduct, refreshProducts } =
     useProductStore();
 
   const [search, setSearch] = useState("");
@@ -84,6 +93,75 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // QR
+  const qrRef = useRef<HTMLDivElement>(null);
+
+  const handleDownloadQR = () => {
+    const svg = qrRef.current?.querySelector("svg");
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const img = new Image();
+    img.onload = () => {
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, 512, 512);
+      ctx.drawImage(img, 0, 0, 512, 512);
+      const link = document.createElement("a");
+      link.download = "qr-ferreteria.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    };
+    img.src =
+      "data:image/svg+xml;base64," +
+      btoa(unescape(encodeURIComponent(svgData)));
+  };
+
+  // Aumento masivo de precios
+  const [pricePercent, setPricePercent] = useState("");
+  const [priceMode, setPriceMode] = useState<PriceMode>("idle");
+  const [pricePreview, setPricePreview] = useState<PricePreviewItem[]>([]);
+  const [priceError, setPriceError] = useState<string | null>(null);
+
+  const handlePricePreview = () => {
+    const pct = parseFloat(pricePercent);
+    if (isNaN(pct) || pct === 0 || pct < -99 || pct > 1000) {
+      setPriceError("Ingresá un porcentaje válido entre -99 y 1000.");
+      return;
+    }
+    setPriceError(null);
+    setPricePreview(
+      products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        oldPrice: p.price,
+        newPrice: Math.round((p.price * (1 + pct / 100)) / 50) * 50,
+      }))
+    );
+    setPriceMode("preview");
+  };
+
+  const handleBulkApply = async () => {
+    const pct = parseFloat(pricePercent);
+    setPriceMode("applying");
+    setPriceError(null);
+    try {
+      await bulkUpdatePrices(products, pct);
+      await refreshProducts();
+      setPriceMode("idle");
+      setPricePercent("");
+      setPricePreview([]);
+    } catch (err) {
+      setPriceError(
+        err instanceof Error ? err.message : "No se pudieron actualizar los precios."
+      );
+      setPriceMode("preview");
+    }
+  };
 
   const filtered = products.filter(
     (p) =>
@@ -243,6 +321,105 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
           <p className="text-xs text-gray-500 mt-1">Sin stock</p>
         </div>
       </div>
+      {/* Herramientas: QR y aumento de precios */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        {/* QR del sitio */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col items-center gap-3">
+          <div className="flex items-center gap-2 self-start">
+            <QrCode className="w-4 h-4 text-orange-600" />
+            <h3 className="font-semibold text-sm text-black">QR del sitio</h3>
+          </div>
+          <div ref={qrRef} className="bg-white p-2 rounded">
+            <QRCode value={SITE_URL} size={160} />
+          </div>
+          <p className="text-xs text-gray-400 text-center">{SITE_URL}</p>
+          <button
+            onClick={handleDownloadQR}
+            className="flex items-center gap-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-lg px-3 py-2 hover:bg-orange-50 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Descargar PNG
+          </button>
+        </div>
+
+        {/* Aumento masivo de precios */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-orange-600" />
+            <h3 className="font-semibold text-sm text-black">Actualizar precios</h3>
+          </div>
+
+          {priceMode === "idle" && (
+            <>
+              <p className="text-xs text-gray-500">
+                Aplicá un aumento porcentual a todos los productos. Los precios se redondean a $50.
+              </p>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    min="-99"
+                    max="1000"
+                    value={pricePercent}
+                    onChange={(e) => { setPricePercent(e.target.value); setPriceError(null); }}
+                    placeholder="Ej: 15"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
+                </div>
+                <button
+                  onClick={handlePricePreview}
+                  disabled={!pricePercent || loading}
+                  className="px-4 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors whitespace-nowrap"
+                >
+                  Previsualizar
+                </button>
+              </div>
+              {priceError && <p className="text-xs text-red-600">{priceError}</p>}
+            </>
+          )}
+
+          {priceMode === "preview" && (
+            <>
+              <p className="text-xs text-gray-500 font-medium">
+                Aumento del {pricePercent}% — {pricePreview.length} productos
+              </p>
+              <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-100 divide-y divide-gray-100 text-xs">
+                {pricePreview.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center px-3 py-1.5">
+                    <span className="text-gray-700 truncate max-w-[55%]">{item.name}</span>
+                    <span className="text-gray-400 line-through">{formatPrice(item.oldPrice)}</span>
+                    <span className="font-semibold text-green-600">{formatPrice(item.newPrice)}</span>
+                  </div>
+                ))}
+              </div>
+              {priceError && <p className="text-xs text-red-600">{priceError}</p>}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setPriceMode("idle"); setPriceError(null); }}
+                  className="flex-1 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => void handleBulkApply()}
+                  className="flex-1 py-2 bg-orange-600 text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors"
+                >
+                  Aplicar
+                </button>
+              </div>
+            </>
+          )}
+
+          {priceMode === "applying" && (
+            <div className="flex flex-col items-center justify-center py-6 gap-2 text-gray-500 text-sm">
+              <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+              Actualizando precios...
+            </div>
+          )}
+        </div>
+      </div>
+
       {(error || submitError) && (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 break-words">
           {submitError ?? error}

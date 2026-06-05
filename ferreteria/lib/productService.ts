@@ -167,3 +167,16 @@ export async function removeProduct(id: string): Promise<void> {
   const { error } = await supabase.from(TABLE).delete().eq("id", id);
   if (error) throw error;
 }
+
+export async function bulkUpdatePrices(
+  products: Product[],
+  percentage: number
+): Promise<void> {
+  const supabase = await requireAuthedClient();
+  await Promise.all(
+    products.map((p) => {
+      const newPrice = Math.round((p.price * (1 + percentage / 100)) / 50) * 50;
+      return supabase.from(TABLE).update({ price: newPrice }).eq("id", p.id);
+    })
+  );
+}
