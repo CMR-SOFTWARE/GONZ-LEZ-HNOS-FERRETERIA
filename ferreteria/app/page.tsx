@@ -50,7 +50,7 @@ export default function HomePage() {
             </div>
             <div className="min-w-0">
               <h1 className="text-base sm:text-lg font-bold leading-tight">
-                Bienvenido a nuestra Ferretería
+                Bienvenido a nuestra ferretería en San Nicolás de los Arroyos
               </h1>
               <p className="text-[11px] text-white/90 sm:text-xs leading-snug max-w-xl">
                 Encontrá todo lo que necesitás y pedí fácil por WhatsApp.

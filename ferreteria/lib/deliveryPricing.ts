@@ -12,11 +12,6 @@ export type DeliveryType =
 /** Sucursales para retiro (nombre corto + dirección que va al pedido). */
 export const PICKUP_BRANCHES = [
   {
-    id: "mitre",
-    label: "Sucursal Av. Mitre",
-    address: "Av. Mitre 845, San Nicolás – Lun a Vie 8 a 18hs",
-  },
-  {
     id: "alberdi",
     label: "Sucursal Alberdi",
     address: "Av. Alberdi 302, San Nicolás – Lun a Vie 8 a 17hs",

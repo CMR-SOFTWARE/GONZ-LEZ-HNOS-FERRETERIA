@@ -1,10 +1,13 @@
 import { Instagram, MapPin, Phone } from "lucide-react";
 import { whatsAppUrl, WHATSAPP_BUSINESS_LABEL } from "@/lib/whatsapp";
+import {
+  STORE_ADDRESS,
+  STORE_GOOGLE_MAPS_URL,
+  STORE_INSTAGRAM_URL,
+  STORE_NAME,
+  STORE_SERVICE_AREA_TEXT,
+} from "@/lib/siteConfig";
 
-const STORE_NAME = "GONZ\u00C1LEZ-HNOS FERRETERIA";
-const STORE_ADDRESS = "Alberdi 302, Esquina San Martín";
-const STORE_INSTAGRAM_URL =
-  "https://www.instagram.com/ferreteriagonzalezhermanos?igsh=a2t1OHdpbW1yanht";
 const STORE_INSTAGRAM_LABEL = "Ferretería González Hermanos";
 
 export function Footer() {
@@ -17,6 +20,9 @@ export function Footer() {
             <p className="mt-0.5 text-sm text-gray-500">
               Todo lo que necesitas para tu obra
             </p>
+            <p className="mt-0.5 text-sm text-gray-500">
+              {STORE_SERVICE_AREA_TEXT}
+            </p>
           </div>
           <div className="flex flex-col items-center gap-2 sm:items-end">
             <a
@@ -28,10 +34,15 @@ export function Footer() {
               <Phone className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
               <span>WhatsApp: {WHATSAPP_BUSINESS_LABEL}</span>
             </a>
-            <p className="inline-flex items-center gap-2 text-sm text-gray-600">
+            <a
+              href={STORE_GOOGLE_MAPS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-orange-600 transition-colors"
+            >
               <MapPin className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
-              <span>{STORE_ADDRESS}</span>
-            </p>
+              <span>{STORE_ADDRESS} — Ver en Google Maps</span>
+            </a>
             <a
               href={STORE_INSTAGRAM_URL}
               target="_blank"
