@@ -53,6 +53,9 @@ export const metadata: Metadata = {
     icon: [{ url: "/logo-gonzalez-hermanos.png", type: "image/png" }],
     apple: [{ url: "/logo-gonzalez-hermanos.png", type: "image/png" }],
   },
+  verification: {
+    google: "BvsWhdWmTZJFov431Zw4zmoolicPxiWBrjM6L9vC7QY",
+  },
 };
 
 const localBusinessJsonLd = {
